@@ -42,23 +42,6 @@ export class TracksPageComponent implements OnDestroy {
   readonly editingId = signal<string | null>(null);
   readonly savingId = signal<string | null>(null);
 
-  /**
-   * Bandes du bandeau. La photo est lue dans `public/artistes/<slug>.png` si le fichier existe ;
-   * sinon le dégradé seul s'affiche (une image d'arrière-plan introuvable est ignorée par le navigateur).
-   * `background` (facultatif) impose la couleur de la bande au lieu de celle lue sur la photo.
-   */
-  readonly artists: { name: string; slug: string; color: string; background?: string }[] = [
-    { name: 'Jul', slug: 'jul', color: '#d9a99a' },
-    { name: 'Ninho', slug: 'ninho', color: '#e05a4f' },
-    { name: 'SDM', slug: 'sdm', color: '#f0b27a' },
-    { name: 'Gazo', slug: 'gazo', color: '#9bb7e8' },
-    { name: 'PLK', slug: 'plk', color: '#d6332b', background: '#2a98c4' },
-    { name: 'Ziak', slug: 'ziak', color: '#e8935a' },
-  ];
-
-  /** Couleur du fond de chaque photo, lue au chargement : la bande se fond avec la photo. */
-  readonly photoColors = signal<Partial<Record<string, { background: string; label: string }>>>({});
-
   /** Records du joueur ; on garde, par morceau, le meilleur toutes difficultés confondues. */
   private readonly records = signal<ScoreRecord[]>([]);
   readonly bestByTrack = computed(() => {
@@ -78,34 +61,6 @@ export class TracksPageComponent implements OnDestroy {
     this.load();
     // Information secondaire : en cas d'échec, les cartes s'affichent simplement sans record.
     this.scores.mine().subscribe({ next: (records) => this.records.set(records), error: () => undefined });
-    for (const artist of this.artists) this.readPhotoColor(artist.slug);
-  }
-
-  /**
-   * Moyenne des pixels du tiers central de la ligne du haut (le fond, au-dessus de la tête).
-   * Seul le centre est utilisé : c'est la partie visible dans la bande, et les bords sont souvent
-   * assombris (vignettage).
-   * Photo absente : `onload` n'est jamais appelé et la couleur par défaut reste en place.
-   */
-  private readPhotoColor(slug: string): void {
-    const image = new Image();
-    image.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = image.naturalWidth;
-      canvas.height = 1;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.drawImage(image, 0, 0); // ne garde que la première ligne de pixels
-      const from = Math.floor(canvas.width / 3);
-      const pixels = ctx.getImageData(from, 0, Math.max(1, from), 1).data;
-      const rgb = [0, 0, 0];
-      for (let i = 0; i < pixels.length; i += 4) for (let c = 0; c < 3; c++) rgb[c] += pixels[i + c];
-      const [r, g, b] = rgb.map((sum) => Math.round(sum / (pixels.length / 4)));
-      // Luminance perçue : nom foncé sur fond clair, clair sur fond foncé.
-      const label = 0.299 * r + 0.587 * g + 0.114 * b > 140 ? '#1b1f2a' : '#f4f6f8';
-      this.photoColors.update((colors) => ({ ...colors, [slug]: { background: `rgb(${r} ${g} ${b})`, label } }));
-    };
-    image.src = `artistes/${slug}.png`;
   }
 
   /**

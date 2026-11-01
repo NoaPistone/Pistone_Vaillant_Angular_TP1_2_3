@@ -1,17 +1,7 @@
 :host { display: block; }
 
-/* Bandeau : six bandes verticales colorées, une par artiste, photo détourée en bas. */
-.artists-hero { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 380px; overflow: hidden; margin-bottom: 1.5rem; padding: 0 2rem 1.8rem; color: #f4f6f8; background: var(--ink); border-radius: 14px; }
-.artists { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(6, 1fr); margin: 0; padding: 0; list-style: none; }
-.artists li {
-  display: flex; justify-content: center; padding-top: 1.1rem;
-  background: var(--photo) center bottom / auto 82% no-repeat, var(--panel);
-}
-.artists span { color: var(--label, #1b1f2a); font-size: 1.35rem; font-weight: 800; font-family: var(--font-display); }
-/* Voile sombre en bas pour que le titre reste lisible au-dessus des photos. */
-.artists-hero::after { content: ''; position: absolute; inset: auto 0 0; height: 55%; background: linear-gradient(transparent, var(--ink) 85%); pointer-events: none; }
-.artists-hero h1, .artists-hero p { position: relative; z-index: 1; }
-.artists-hero p { max-width: 42ch; color: #c3cad5; }
+.hero { margin-bottom: 1.5rem; }
+.hero p { max-width: 42ch; color: var(--muted); }
 
 .layout { display: grid; grid-template-columns: minmax(260px, 1fr) 2.2fr; gap: 1.5rem; align-items: start; }
 .upload { position: sticky; top: 1rem; }
@@ -32,9 +22,6 @@
 @media (max-width: 800px) {
   .layout { grid-template-columns: 1fr; }
   .upload { position: static; }
-  .artists-hero { min-height: 300px; padding: 0 1.25rem 1.5rem; }
-  .artists { grid-template-columns: repeat(3, 1fr); }
-  .artists li:nth-child(n + 4) { display: none; }
   .tracklist { padding: 1rem 1rem 0.5rem; }
   .transport { grid-template-columns: 1fr; gap: 0.4rem; }
 }

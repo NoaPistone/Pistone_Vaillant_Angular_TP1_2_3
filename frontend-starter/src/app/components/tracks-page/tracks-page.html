@@ -10,19 +10,7 @@
       ></audio>
     </div>
   }
-  <header class="artists-hero">
-    <!-- Décor : masqué aux lecteurs d'écran. -->
-    <ul class="artists" aria-hidden="true">
-      @for (artist of artists; track artist.slug) {
-        <li
-          [style.--panel]="artist.background ?? photoColors()[artist.slug]?.background ?? artist.color"
-          [style.--label]="artist.background ? null : photoColors()[artist.slug]?.label"
-          [style.--photo]="'url(artistes/' + artist.slug + '.png)'"
-        >
-          <span>{{ artist.name }}</span>
-        </li>
-      }
-    </ul>
+  <header class="hero">
     <h1>Backing tracks</h1>
     <p>Importez vos morceaux de travail et jouez par-dessus.</p>
   </header>
