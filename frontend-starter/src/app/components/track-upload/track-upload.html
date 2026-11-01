@@ -1,0 +1,24 @@
+<article class="card">
+  <h2>Importer</h2>
+  <label>Titre<input [formControl]="title" placeholder="Nom du fichier par défaut" /></label>
+  <label>Fichier audio
+    <input #fileInput type="file" accept=".mp3,.wav,.ogg,.m4a,audio/*" aria-describedby="file-hint" (change)="choose($event)" [disabled]="uploading()" />
+    <small id="file-hint" class="hint">MP3, WAV, OGG ou M4A, 25 Mo maximum.</small>
+  </label>
+  <button type="button" class="submit" (click)="upload()" [disabled]="!file() || uploading()">
+    {{ uploading() ? 'Envoi…' : 'Envoyer' }}
+  </button>
+
+  @if (uploading()) {
+    <div class="progress" role="status">
+      <progress max="100" [value]="percent()" aria-label="Progression de l’envoi"></progress>
+      <span>{{ processing() ? 'Traitement par le serveur…' : percent() + ' %' }}</span>
+    </div>
+  }
+  @if (successTitle()) {
+    <p class="success" role="status">Piste « {{ successTitle() }} » envoyée.</p>
+  }
+  @if (errorMessage()) {
+    <p class="error" role="alert">{{ errorMessage() }}</p>
+  }
+</article>

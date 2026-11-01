@@ -1,0 +1,20 @@
+:host { display: block; }
+.topbar { view-transition-name: topbar; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.8rem max(1rem, calc((100vw - 1120px) / 2 + 1rem)); background: var(--surface); border-bottom: 1px solid var(--border); }
+.brand { display: grid; color: inherit; text-decoration: none; }
+.brand b { font-size: 1.1rem; font-weight: 800; font-family: var(--font-display); }
+.brand small { color: var(--muted); font-size: 0.8rem; }
+nav { display: flex; align-items: center; gap: 0.25rem; }
+nav a { padding: 0.45rem 0.75rem; color: var(--muted); font-weight: 550; text-decoration: none; border-radius: var(--radius-small); }
+nav a:hover { color: var(--fg); background: var(--surface-alt); }
+/* La page courante est soulignée d'un trait plutôt que colorée : l'information ne repose pas que sur la couleur. */
+nav a.active { color: var(--fg); box-shadow: inset 0 -2px 0 var(--accent); border-radius: 0; }
+nav button { margin-left: 0.5rem; }
+/* Avatar et solde : un raccourci vers la boutique. */
+nav a.me { display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; color: var(--fg); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 640px) {
+  .topbar { flex-wrap: wrap; }
+  .brand small { display: none; }
+}
+
+nav a { transition: color var(--fast) var(--ease), background-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease); }

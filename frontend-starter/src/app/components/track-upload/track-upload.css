@@ -1,0 +1,6 @@
+:host { display: block; }
+h2 { margin-bottom: 0.25rem; }
+.hint { color: var(--muted); font-size: 0.8rem; font-weight: 400; }
+button.submit:not([class*='mat-']) { width: 100%; margin-top: 0.5rem; }
+.progress { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.9rem; font-variant-numeric: tabular-nums; }
+progress { flex: 1; height: 0.6rem; accent-color: var(--accent); }

@@ -1,0 +1,40 @@
+:host { display: block; }
+
+/* Bandeau : six bandes verticales colorées, une par artiste, photo détourée en bas. */
+.artists-hero { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 380px; overflow: hidden; margin-bottom: 1.5rem; padding: 0 2rem 1.8rem; color: #f4f6f8; background: var(--ink); border-radius: 14px; }
+.artists { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(6, 1fr); margin: 0; padding: 0; list-style: none; }
+.artists li {
+  display: flex; justify-content: center; padding-top: 1.1rem;
+  background: var(--photo) center bottom / auto 82% no-repeat, var(--panel);
+}
+.artists span { color: var(--label, #1b1f2a); font-size: 1.35rem; font-weight: 800; font-family: var(--font-display); }
+/* Voile sombre en bas pour que le titre reste lisible au-dessus des photos. */
+.artists-hero::after { content: ''; position: absolute; inset: auto 0 0; height: 55%; background: linear-gradient(transparent, var(--ink) 85%); pointer-events: none; }
+.artists-hero h1, .artists-hero p { position: relative; z-index: 1; }
+.artists-hero p { max-width: 42ch; color: #c3cad5; }
+
+.layout { display: grid; grid-template-columns: minmax(260px, 1fr) 2.2fr; gap: 1.5rem; align-items: start; }
+.upload { position: sticky; top: 1rem; }
+
+.tracklist { padding: 1.25rem 1.5rem 0.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.tracklist-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+.count { margin-left: 0.35rem; padding: 0.05rem 0.5rem; color: var(--muted); font-size: 0.85rem; font-weight: 600; background: var(--surface-alt); border-radius: 999px; }
+.status { color: var(--muted); }
+.tracks { margin: 0; padding: 0; list-style: none; }
+.tracks li + li { border-top: 1px solid var(--border); }
+.empty { padding: 2rem 0; color: var(--muted); text-align: center; }
+
+/* Barre de lecture : en haut, sous l'en-tête, et collée en haut de l'écran pendant le défilement. */
+.transport { position: sticky; top: 0; z-index: 10; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); align-items: center; gap: 1rem; margin: -2rem 0 1.25rem; padding: 0.75rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-bottom: 2px solid var(--brass); border-radius: 0 0 var(--radius) var(--radius); box-shadow: 0 6px 20px #0000001a; }
+.now { margin: 0; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.now b { color: var(--fg); }
+
+@media (max-width: 800px) {
+  .layout { grid-template-columns: 1fr; }
+  .upload { position: static; }
+  .artists-hero { min-height: 300px; padding: 0 1.25rem 1.5rem; }
+  .artists { grid-template-columns: repeat(3, 1fr); }
+  .artists li:nth-child(n + 4) { display: none; }
+  .tracklist { padding: 1rem 1rem 0.5rem; }
+  .transport { grid-template-columns: 1fr; gap: 0.4rem; }
+}

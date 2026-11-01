@@ -1,0 +1,95 @@
+<section class="live">
+  <header>
+    <a routerLink="/groups">Retour aux groupes</a>
+    <h1>Salon du groupe</h1>
+  </header>
+
+  @switch (connection()) {
+    @case ('connecting') { <p class="status" role="status">Connexion au salon…</p> }
+    @case ('lost') {
+      <p class="error" role="alert">Connexion au salon perdue.</p>
+      <button type="button" class="ghost" (click)="connect()">Se reconnecter</button>
+    }
+  }
+
+  @if (live(); as state) {
+    @if (state.state === 'finished') {
+      <div class="card result" role="status">
+        <h2>Partie terminée</h2>
+        <p class="band">Score du groupe : <b>{{ state.bandScore | number }}</b></p>
+        @if (isHost()) {
+          <button type="button" (click)="reset()" [disabled]="sending()">Nouvelle partie</button>
+        } @else {
+          <p class="hint">L’hôte peut lancer une nouvelle partie.</p>
+        }
+      </div>
+    }
+    <!-- Partie abandonnée en route (onglet fermé…) : l'hôte ramène tout le monde au salon. -->
+    @if (state.state === 'playing' && isHost()) {
+      <button type="button" class="ghost" (click)="reset()" [disabled]="sending()">Arrêter la partie et revenir au salon</button>
+    }
+
+    <div class="layout">
+      <section class="card" aria-labelledby="players-title">
+        <h2 id="players-title">Joueurs</h2>
+        <ul class="players">
+          @for (player of state.players; track player.id) {
+            <li [class.ready]="player.ready" [class.me]="player.id === myId()">
+              <app-avatar-badge [avatar]="player.avatar" [size]="40" />
+              <div>
+                <b>{{ player.name }}</b>
+                @if (player.id === state.hostId) {<small class="tag">Hôte</small>}
+                <p class="hint">{{ instrumentLabel[player.instrument] }}, {{ difficultyLabel[player.difficulty] }}</p>
+              </div>
+              <span class="state">{{ state.state === 'lobby' ? (player.ready ? 'Prêt' : 'Pas prêt') : (player.score | number) }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+
+      @if (state.state === 'lobby') {
+        <section class="card" aria-labelledby="setup-title">
+          <h2 id="setup-title">Ma partie</h2>
+
+          <label>Morceau
+            @if (isHost()) {
+              <select [value]="state.track?.id ?? ''" (change)="chooseTrack($any($event.target).value)" [disabled]="sending()">
+                <option value="" disabled>Choisir un morceau</option>
+                @for (track of tracks(); track track.id) {
+                  <option [value]="track.id">{{ track.title }} ({{ track.ownerName }})</option>
+                }
+              </select>
+            } @else {
+              <span class="track">{{ state.track?.title ?? 'L’hôte n’a pas encore choisi.' }}</span>
+            }
+          </label>
+
+          @if (me(); as mine) {
+            <fieldset class="chips" [disabled]="mine.ready || sending()">
+              <legend>Instrument</legend>
+              @for (i of instruments; track i.value) {
+                <label><input type="radio" name="instrument" [checked]="mine.instrument === i.value" (change)="setMine({ instrument: i.value })" /> {{ i.label }}</label>
+              }
+            </fieldset>
+            <fieldset class="chips" [disabled]="mine.ready || sending()">
+              <legend>Difficulté</legend>
+              @for (d of difficulties; track d.value) {
+                <label><input type="radio" name="difficulty" [checked]="mine.difficulty === d.value" (change)="setMine({ difficulty: d.value })" /> {{ d.label }}</label>
+              }
+            </fieldset>
+            <button type="button" [class.ghost]="mine.ready" (click)="setMine({ ready: !mine.ready })" [disabled]="sending()">
+              {{ mine.ready ? 'Je ne suis plus prêt' : 'Je suis prêt' }}
+            </button>
+          }
+
+          @if (isHost()) {
+            <button type="button" class="go" (click)="start()" [disabled]="!state.canStart || sending()">Lancer la partie</button>
+            @if (!state.canStart) {
+              <p class="hint">Choisissez un morceau ; la partie se lance quand tout le monde est prêt.</p>
+            }
+          }
+        </section>
+      }
+    </div>
+  }
+</section>

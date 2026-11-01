@@ -1,0 +1,227 @@
+<!-- Fond de scène choisi dans la boutique (couleurs du fond, sinon la scène néon par défaut). -->
+<section
+  class="game stage-page stage-backdrop"
+  [style.--stage]="backdrop()?.stage"
+  [style.--stage-deep]="backdrop()?.deep"
+  [style.--spot-a]="backdrop()?.spotA"
+  [style.--spot-b]="backdrop()?.spotB"
+>
+  @if (backdrop()?.shader; as shader) {
+    <app-stage-shader [shader]="shader" [analyser]="analyser()" [combo]="comboHeat()" [judgement]="feedback()" />
+  }
+  <header class="game-head">
+    <a routerLink="/tracks">Retour à la bibliothèque</a>
+    <h1>{{ title }}</h1>
+    @if (phase() === 'playing') {
+      <button type="button" class="ghost stop" (click)="stop()">Arrêter</button>
+    }
+  </header>
+
+  @switch (phase()) {
+    @case ('loading') {
+      <p class="panel status" role="status">Analyse du morceau : détection des attaques…</p>
+    }
+    @case ('error') {
+      <p class="panel error" role="alert">{{ error() }}</p>
+    }
+    @case ('ready') {
+      @if (live) {
+        @if (audioBlocked()) {
+          <div class="panel setup">
+            <p>Le navigateur attend un clic pour lancer le son. La partie a commencé : vous la rejoignez au même endroit que le groupe.</p>
+            <button type="button" class="go" (click)="start()">Rejoindre la partie</button>
+          </div>
+        } @else {
+          <p class="panel status" role="status">Départ synchronisé avec le groupe…</p>
+        }
+      } @else {
+      <div class="panel setup">
+        <fieldset class="difficulty">
+          <legend>Instrument</legend>
+          @for (i of instruments; track i.value) {
+            <label>
+              <input type="radio" name="instrument" [value]="i.value" [checked]="instrument() === i.value" (change)="instrument.set(i.value)" />
+              {{ i.label }}
+            </label>
+          }
+        </fieldset>
+        <p class="hint instrument-hint">{{ instrumentDescription() }}</p>
+
+        <fieldset class="difficulty">
+          <legend>Difficulté</legend>
+          @for (d of difficulties; track d.value) {
+            <label>
+              <input type="radio" name="difficulty" [value]="d.value" [checked]="difficulty() === d.value" (change)="difficulty.set(d.value)" />
+              {{ d.label }}
+            </label>
+          }
+        </fieldset>
+
+        <p>Frappez la touche du couloir quand la note passe sur la ligne de frappe.</p>
+        <ul class="keys" aria-label="Touches">
+          @for (lane of lanes(); track lane.key) {
+            <li [style.--lane]="lane.color"><kbd>{{ lane.key }}</kbd></li>
+          }
+        </ul>
+        <p class="hint">Clavier QWERTY : Q, W, E, R, T. Sur écran tactile, touchez les boutons sous la piste. Échap arrête la partie.</p>
+
+        <!-- Légende des types de notes : chaque mécanique est expliquée avant la partie. -->
+        <ul class="legend">
+          <li><b>Accord</b> deux notes côte à côte : appuyez sur les deux touches en même temps.</li>
+          <li><b>Note maintenue</b> une traînée suit la note : gardez la touche enfoncée pour marquer des points en continu.</li>
+          <li><b>HOPO</b> note étroite cerclée de blanc : si la note d’avant est réussie, il suffit de tenir sa touche.</li>
+          <li><b>Overdrive</b> réussissez les notes dorées pour remplir la jauge, puis appuyez sur Espace : points doublés.</li>
+        </ul>
+
+        <label class="offset">Vitesse de défilement : {{ trackSpeed() }}x
+          <input type="range" min="1" max="2" step="0.25" [value]="trackSpeed()" (input)="trackSpeed.set(+$any($event.target).value)" aria-describedby="speed-hint" />
+          <small id="speed-hint" class="hint">Plus rapide = notes plus espacées à l’écran ; la musique ne change pas.</small>
+        </label>
+
+        <label class="offset">Décalage audio : {{ offsetMs() }} ms
+          <input type="range" min="-250" max="250" step="10" [value]="offsetMs()" (input)="offsetMs.set(+$any($event.target).value)" aria-describedby="offset-hint" />
+          <small id="offset-hint" class="hint">Augmentez si les notes arrivent avant le son (casque Bluetooth).</small>
+        </label>
+
+        <button type="button" class="go" (click)="start()">Jouer</button>
+      </div>
+      }
+    }
+    @case ('finished') {
+      <div class="panel result" role="status">
+        <p class="stars big" role="img" [attr.aria-label]="starsLabel()">
+          @for (fill of starFills(); track $index) {
+            <span class="star" [class.won]="fill === 1">★</span>
+          }
+        </p>
+        <p class="final-score">{{ displayScore() }}</p>
+        <!-- Enregistrement en ligne : record battu, record à battre, ou erreur avec nouvel essai. -->
+        <div class="save" aria-live="polite">
+          @if (save().status === 'saving') {
+            <p class="hint">Enregistrement du score…</p>
+          }
+          @if (saved(); as result) {
+            <p class="coins">+{{ result.coinsEarned }} points pour la boutique</p>
+            @if (result.best) {
+              <p class="record">Nouveau record !</p>
+            } @else {
+              <p class="hint">Record à battre : {{ result.record.score }}</p>
+            }
+          }
+          @if (saveError()) {
+            <p class="error" role="alert">{{ saveError() }}</p>
+            <button type="button" class="ghost" (click)="saveScore()">Réessayer l’enregistrement</button>
+          }
+        </div>
+        <dl>
+          <div><dt>Note</dt><dd>{{ finalGrade() }}</dd></div>
+          <div><dt>Perfect</dt><dd>{{ counts().perfect }}</dd></div>
+          <div><dt>Good</dt><dd>{{ counts().good }}</dd></div>
+          <div><dt>Manquées</dt><dd>{{ counts().miss }}</dd></div>
+          <div><dt>Meilleur combo</dt><dd>{{ maxCombo() }}</dd></div>
+          <div><dt>Précision</dt><dd>{{ accuracy() }} %</dd></div>
+        </dl>
+        @if (live) {
+          <!-- Résultats du groupe : se complètent en direct à mesure que les autres finissent. -->
+          <ol class="band-results" aria-label="Scores du groupe">
+            @for (player of bandPlayers(); track player.id) {
+              <li><span>{{ player.avatar.emoji }} {{ player.name }}</span><b>{{ player.score }}</b>@if (!player.done) {<small> en cours</small>}</li>
+            }
+          </ol>
+          <p class="band-total">Score du groupe : <b>{{ band()?.bandScore ?? displayScore() }}</b></p>
+          <div class="actions">
+            <a class="go-link" [routerLink]="['/groups', live.groupId, 'live']">Retour au salon</a>
+          </div>
+        } @else {
+          <div class="actions">
+            <button type="button" class="go" (click)="start()">Rejouer</button>
+            <button type="button" class="ghost" (click)="phase.set('ready')">Changer de difficulté</button>
+            <a class="ghost-link" routerLink="/leaderboard">Voir le classement</a>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  @if (phase() === 'playing') {
+    <div class="play" [attr.data-tier]="tier()" [class.overdrive]="overdriveActive()">
+      <div class="stage-wrap">
+        <canvas #stage class="stage" role="img" aria-label="Piste de jeu : les notes descendent vers la ligne de frappe"></canvas>
+        @for (f of feedback() ? [feedback()!] : []; track f.at) {
+          <p [class]="'feedback ' + f.text" aria-hidden="true">{{ f.text === 'miss' ? 'Raté' : f.text }}</p>
+        }
+        <p class="multiplier">x{{ multiplier() }}</p>
+      </div>
+
+      <!-- Segments de 10 notes : bleu plein → x2, orange → x3, rouge → x4 (puis x5, x6 à la basse). Un raté vide la barre. -->
+      <div
+        class="combo-bar"
+        role="meter"
+        aria-label="Barre de combo"
+        aria-valuemin="0"
+        [attr.aria-valuemax]="comboBarMax()"
+        [attr.aria-valuenow]="comboMeter()"
+        [attr.aria-valuetext]="combo() + ' notes d’affilée, multiplicateur x' + multiplier()"
+      >
+        @for (fill of comboSegments(); track $index) {
+          <span class="segment" [class.full]="fill === 1"><i [style.transform]="'scaleX(' + fill + ')'"></i></span>
+        }
+      </div>
+
+      <div class="hud">
+        <div class="hud-score">
+          <p class="stars" role="img" [attr.aria-label]="starsLabel()">
+            @for (fill of starFills(); track $index) {
+              <span class="star" [class.won]="fill === 1" [style.--fill]="fill">★</span>
+            }
+          </p>
+          <p class="score"><span>Score</span><b>{{ displayScore() }}</b></p>
+        </div>
+        <div class="overdrive-box">
+          <!-- Jauge d'Overdrive : utilisable dès la moitié (repère), se vide pendant l'activation. -->
+          <div
+            class="overdrive-meter"
+            role="meter"
+            aria-label="Jauge d’Overdrive"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="overdrive() * 100 | number: '1.0-0'"
+          >
+            <i [style.transform]="'scaleX(' + overdrive() + ')'"></i>
+          </div>
+          <button type="button" class="ghost od-button" (click)="activateOverdrive()" [disabled]="!overdriveReady()">
+            {{ overdriveActive() ? 'Overdrive !' : 'Overdrive (Espace)' }}
+          </button>
+        </div>
+        @if (live) {
+          <ol class="band-live" aria-label="Scores du groupe en direct">
+            @for (player of bandPlayers(); track player.id) {
+              <li><span>{{ player.avatar.emoji }} {{ player.name }}</span><b>{{ player.score }}</b></li>
+            }
+          </ol>
+        }
+        <dl class="hud-stats">
+          <div><dt>Combo</dt><dd>{{ combo() }}</dd></div>
+          <div><dt>Précision</dt><dd>{{ accuracy() }} %</dd></div>
+        </dl>
+      </div>
+
+      <div class="pads">
+        @for (lane of lanes(); track lane.key; let i = $index) {
+          <button
+            type="button"
+            class="pad"
+            [style.--lane]="lane.color"
+            (pointerdown)="press(i)"
+            (pointerup)="release(i)"
+            (pointerleave)="release(i)"
+            (pointercancel)="release(i)"
+            [attr.aria-label]="'Couloir ' + (i + 1) + ', touche ' + lane.key"
+          >
+            {{ lane.key }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+</section>

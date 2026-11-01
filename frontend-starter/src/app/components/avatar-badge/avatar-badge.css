@@ -1,0 +1,12 @@
+:host { display: inline-flex; }
+.badge {
+  display: grid;
+  place-items: center;
+  width: calc(var(--size) * 1px);
+  height: calc(var(--size) * 1px);
+  font-size: calc(var(--size) * 0.55px);
+  line-height: 1;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--avatar) 55%, #ffffff), var(--avatar));
+  border-radius: 50%;
+  box-shadow: 0 0 calc(var(--size) * 0.3px) color-mix(in srgb, var(--avatar) 60%, transparent);
+}

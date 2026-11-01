@@ -1,0 +1,108 @@
+<section class="groups">
+  <header>
+    <h1>Groupes</h1>
+    <p>Jouez à plusieurs en direct, chacun avec son instrument. Les morceaux de chaque membre sont jouables par tout le groupe.</p>
+    @if (myTag(); as tag) {
+      <p class="my-tag">Votre identifiant d’ami : <b>#{{ tag }}</b></p>
+    }
+  </header>
+
+  <div class="forms">
+    @if (ownsGroup()) {
+      <div class="card">
+        <h2>Créer un groupe</h2>
+        <p class="note">Vous avez déjà créé votre groupe : vous en êtes l’hôte. Un seul groupe par joueur.</p>
+      </div>
+    } @else {
+      <form class="card" [formGroup]="createForm" (ngSubmit)="create()">
+        <h2>Créer un groupe</h2>
+        <label>Nom du groupe
+          <input formControlName="name" maxlength="40" autocomplete="off" />
+          @if (name.touched && name.invalid) {
+            <small class="error">Donnez un nom de 2 à 40 caractères.</small>
+          }
+        </label>
+        <button type="submit" [disabled]="busy() !== null">{{ busy() === 'create' ? 'Création…' : 'Créer' }}</button>
+      </form>
+    }
+
+    <form class="card" [formGroup]="joinForm" (ngSubmit)="join()">
+      <h2>Rejoindre un groupe</h2>
+      <label>Code d’invitation
+        <input formControlName="code" maxlength="8" autocomplete="off" placeholder="Ex. K7QF2M" class="code-input" />
+        @if (code.touched && code.invalid) {
+          <small class="error">Le code fait 6 lettres ou chiffres.</small>
+        }
+      </label>
+      <button type="submit" [disabled]="busy() !== null">{{ busy() === 'join' ? 'Connexion…' : 'Rejoindre' }}</button>
+    </form>
+
+    <form class="card" [formGroup]="friendForm" (ngSubmit)="addFriend()">
+      <h2>Ajouter un ami</h2>
+      <label>Identifiant de votre ami
+        <input formControlName="tag" maxlength="6" autocomplete="off" placeholder="Ex. #K7P2" class="code-input" />
+        @if (tag.touched && tag.invalid) {
+          <small class="error">L’identifiant fait 4 lettres ou chiffres, après le #.</small>
+        }
+      </label>
+      <button type="submit" [disabled]="busy() !== null">{{ busy() === 'friend' ? 'Ajout…' : 'Ajouter' }}</button>
+    </form>
+  </div>
+
+  <h2 class="list-title">Mes groupes</h2>
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+    <button type="button" class="ghost" (click)="load()">Réessayer</button>
+  }
+  @if (loading()) {
+    <div class="skeleton-list" role="status" aria-busy="true">
+      <span class="visually-hidden">Chargement…</span>
+      <span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span>
+    </div>
+  }
+  <ul class="list">
+    @for (group of groups(); track group.id) {
+      <li class="card group">
+        <div class="group-head">
+          <h3>{{ group.name }}</h3>
+          <p class="code">Code d’invitation : <b>{{ group.code }}</b></p>
+        </div>
+        <ul class="members" aria-label="Membres">
+          @for (member of group.members; track member.id) {
+            <li>
+              <app-avatar-badge [avatar]="member.avatar" [size]="34" />
+              <span>{{ member.name }}@if (member.isOwner) {<small> (hôte)</small>}</span>
+            </li>
+          }
+        </ul>
+        <div class="actions">
+          <a class="go" [routerLink]="['/groups', group.id, 'live']">Ouvrir le salon</a>
+          <button type="button" class="ghost danger" (click)="leave(group)" [disabled]="busy() !== null"
+            [attr.aria-label]="(group.isOwner ? 'Supprimer ' : 'Quitter ') + group.name">
+            {{ busy() === group.id ? 'Départ…' : group.isOwner ? 'Supprimer le groupe' : 'Quitter' }}
+          </button>
+        </div>
+      </li>
+    } @empty {
+      @if (!loading() && !error()) {
+        <li class="empty">Aucun groupe pour l’instant. Créez-en un et partagez son code, ou entrez le code d’un ami.</li>
+      }
+    }
+  </ul>
+
+  <h2 class="list-title">Mes amis</h2>
+  <ul class="list friends">
+    @for (friend of friends(); track friend.id) {
+      <li class="card friend">
+        <app-avatar-badge [avatar]="friend.avatar" [size]="34" />
+        <span>{{ friend.name }} <small>#{{ friend.tag }}</small></span>
+        <button type="button" class="ghost danger" (click)="removeFriend(friend)" [disabled]="busy() !== null"
+          [attr.aria-label]="'Retirer ' + friend.name + ' de mes amis'">
+          {{ busy() === friend.id ? 'Retrait…' : 'Retirer' }}
+        </button>
+      </li>
+    } @empty {
+      <li class="empty">Pas encore d’amis. Donnez votre identifiant ou entrez celui d’un ami.</li>
+    }
+  </ul>
+</section>

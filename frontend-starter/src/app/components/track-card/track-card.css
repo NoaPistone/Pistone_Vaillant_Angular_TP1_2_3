@@ -1,0 +1,44 @@
+:host { display: block; }
+.track { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; align-items: center; gap: 1rem; padding: 0.9rem 0 0.9rem 0.75rem; border-left: 3px solid transparent; }
+/* Piste en lecture : filet laiton, comme une frette. */
+.track.current { border-left-color: var(--brass); background: var(--surface-alt); }
+
+button.play:not([class*='mat-']) { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0; font-size: 0.9rem; border-radius: 50%; }
+
+h3 { overflow-wrap: anywhere; }
+/* Texte saisi par l'utilisateur : retours à la ligne conservés, longueur déjà bornée à 500. */
+.description { margin: 0.2rem 0 0; font-size: 0.9rem; white-space: pre-line; overflow-wrap: anywhere; }
+.playing { margin: 0.25rem 0 0; color: var(--brass); font-size: 0.8rem; font-weight: 650; }
+
+.meta { display: flex; gap: 1.25rem; margin: 0; font-size: 0.85rem; }
+dt { color: var(--muted); font-size: 0.75rem; }
+dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* Lien stylé en bouton : c'est une navigation vers le jeu, pas une action. */
+.game-link { padding: 0.55rem 1rem; color: var(--bg); font-weight: 650; text-decoration: none; background: var(--brass); border-radius: var(--radius-small); }
+.game-link:hover { filter: brightness(1.1); }
+
+.secondary { display: flex; gap: 0.25rem; }
+button.remove:not([class*='mat-']) { color: var(--error); border-color: transparent; }
+
+/* Formulaire d'édition : occupe toute la ligne de la card. */
+.track.editing { grid-template-columns: minmax(0, 1fr); padding-right: 0.75rem; border-left-color: var(--accent); background: var(--surface-alt); }
+.edit fieldset { display: grid; margin: 0; padding: 0; border: 0; min-width: 0; }
+.edit label { margin: 0.4rem 0; }
+.edit-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+/* Supprimer à l'écart, à droite : on ne le clique pas par erreur en voulant enregistrer. */
+.edit-actions .remove { margin-left: auto; }
+
+@media (max-width: 640px) {
+  .track { grid-template-columns: auto minmax(0, 1fr); padding-left: 0.5rem; }
+  .meta { grid-column: 2; }
+  .game-link, .secondary { grid-column: 2; justify-self: start; }
+}
+
+/* Record : étoiles gagnées en laiton, les autres en filigrane. */
+.best .stars span { color: var(--border); }
+.best .stars span.won { color: var(--brass); }
+
+/* Survol d'une piste : fond et filet violets, sans déplacer la liste. */
+.track { transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease); }
+.track:hover:not(.editing, .current) { background: color-mix(in srgb, var(--surface-alt) 60%, transparent); border-left-color: var(--accent); }

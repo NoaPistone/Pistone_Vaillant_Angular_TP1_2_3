@@ -1,0 +1,100 @@
+<section class="shop stage-page stage-backdrop">
+  <div class="inner">
+    <header class="shop-head">
+      <div>
+        <h1>Boutique</h1>
+        <p>Chaque partie rapporte des points : 1 pour 100 de score, plus 10 par étoile.</p>
+      </div>
+      <p class="wallet">
+        <span class="coin" aria-hidden="true"></span>
+        <b>{{ coins() | number }}</b>
+        <span>points</span>
+      </p>
+    </header>
+
+    @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+      <button type="button" class="ghost" (click)="load()">Réessayer</button>
+    }
+    @if (loading()) {
+      <div class="skeleton-list" role="status" aria-busy="true">
+        <span class="visually-hidden">Chargement de la boutique…</span>
+        <span class="skeleton"></span><span class="skeleton"></span><span class="skeleton"></span>
+      </div>
+    }
+
+    <!-- Un rayon par onglet : on passe de l'un à l'autre sans faire défiler la page (flèches du clavier aussi). -->
+    <mat-tab-group class="shelves" [(selectedIndex)]="tab" animationDuration="200ms" mat-stretch-tabs="false">
+      @for (shelf of shelves(); track shelf.key) {
+        <mat-tab [label]="shelf.title">
+          @if (shelf.key === 'backgrounds') {
+            <p class="hint">Le fond choisi s’affiche derrière la piste pendant vos parties.</p>
+          }
+          <ul class="grid" [class.wide]="shelf.key === 'backgrounds'">
+            @for (item of shelf.items; track item.id) {
+              <li class="item" [attr.data-rarity]="item.rarity.key" [class.equipped]="item.status === 'equipped'" [class.locked]="item.status === 'locked'">
+                <span class="rarity">{{ item.rarity.label }}</span>
+                @if (item.status === 'equipped') {
+                  <span class="equipped-tag">Équipé</span>
+                }
+
+                <div class="visual">
+                  @if (item.avatar; as avatar) {
+                    <app-avatar-badge [avatar]="avatar" [size]="68" />
+                  }
+                  @if (item.background; as bg) {
+                    <!-- Aperçu : le même décor que derrière la piste, avec une mini-piste pour juger le contraste. -->
+                    <div class="preview stage-backdrop" [style.--stage]="bg.stage" [style.--stage-deep]="bg.deep" [style.--spot-a]="bg.spotA" [style.--spot-b]="bg.spotB" aria-hidden="true">
+                      <!-- Aperçu animé : le vrai shader, qui pulse comme sur une musique (≈ 120 bpm). -->
+                      @if (bg.shader; as shader) {
+                        <app-stage-shader [shader]="shader" [combo]="0.6" />
+                      }
+                      <span class="mini-road"></span>
+                    </div>
+                  }
+                </div>
+
+                <h3>{{ item.name }}</h3>
+
+                <div class="action">
+                  @switch (item.status) {
+                    @case ('equipped') {
+                      <p class="state">Utilisé en ce moment</p>
+                    }
+                    @case ('owned') {
+                      <button type="button" class="equip" (click)="equip(item)" [disabled]="busyId() !== null" [attr.aria-label]="'Choisir ' + item.name">
+                        {{ busyId() === item.shelf + '/' + item.id ? 'Changement…' : 'Équiper' }}
+                      </button>
+                    }
+                    @case ('affordable') {
+                      <button type="button" class="buy" (click)="buy(item)" [disabled]="busyId() !== null" [attr.aria-label]="'Acheter ' + item.name + ' pour ' + item.price + ' points'">
+                        @if (busyId() === item.shelf + '/' + item.id) {
+                          Achat…
+                        } @else {
+                          <span class="coin small" aria-hidden="true"></span> {{ item.price | number }}
+                        }
+                      </button>
+                    }
+                    @case ('locked') {
+                      <div
+                        class="progress"
+                        role="progressbar"
+                        aria-valuemin="0"
+                        [attr.aria-valuemax]="item.price"
+                        [attr.aria-valuenow]="coins()"
+                        [attr.aria-label]="'Points gagnés pour ' + item.name"
+                      >
+                        <i [style.transform]="'scaleX(' + item.progress + ')'"></i>
+                      </div>
+                      <p class="state">{{ coins() | number }} / {{ item.price | number }} points</p>
+                    }
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        </mat-tab>
+      }
+    </mat-tab-group>
+  </div>
+</section>

@@ -1,0 +1,193 @@
+:root {
+  /*
+   * Thème néon sombre (palette « gaming » recommandée par UI UX Pro Max) : violet néon,
+   * accent rose pour les actions fortes. Les composants n'utilisent que ces variables.
+   */
+  --fg: #e2e8f0;
+  --bg: #0f0f23;
+  --surface: #1e1c35;
+  --surface-alt: #27273b;
+  --border: #33305a;
+  --input-border: #4c1d95;
+  --muted: #94a3b8;
+  --accent: #7c3aed;
+  --cta: #f43f5e;
+  --link: #a78bfa;
+  --ink: #15142b;        /* fond du bandeau des artistes */
+  --brass: #f43f5e;      /* piste en lecture, liens d'action */
+  --error: #ff8a80;
+  --success: #7ddc9f;
+  --radius: 12px;
+  --radius-small: 8px;
+  /* Russo One (titres, chiffres) et Chakra Petch (texte) : typographie esport. */
+  --font-display: 'Russo One', system-ui, sans-serif;
+  --font-body: 'Chakra Petch', system-ui, sans-serif;
+  /* Durées et courbe communes : réponses rapides (150 ms), changements de page (250 ms). */
+  --fast: 150ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* color-scheme : champs, barres de défilement et lecteur <audio> natifs restent sombres. */
+  color-scheme: dark;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--fg);
+  background: var(--bg);
+  /* Russo One n'a qu'une graisse : pas de faux gras synthétisé, l'italique reste permis. */
+  font-synthesis-weight: none;
+  /* Jetons Material 3 surchargés pour reprendre la charte de l'application. */
+  --mat-sys-primary: var(--link);
+  --mat-sys-on-primary: #0f0f23;
+  --mat-sys-surface: var(--surface);
+  --mat-sys-on-surface: var(--fg);
+  --mat-sys-on-surface-variant: var(--muted);
+  --mat-sys-inverse-surface: var(--fg);
+  --mat-sys-inverse-on-surface: #0f0f23;
+  --mat-sys-inverse-primary: var(--accent);
+  --mat-sys-body-large-font: var(--font-body);
+  --mat-sys-body-medium-font: var(--font-body);
+  --mat-sys-body-small-font: var(--font-body);
+  --mat-sys-label-large-font: var(--font-body);
+  --mat-sys-label-medium-font: var(--font-body);
+}
+
+* { box-sizing: border-box; }
+/* overflow-x: clip : une section pleine largeur (100vw inclut la barre de défilement) ne crée pas de scroll horizontal. */
+body { margin: 0; overflow-x: clip; }
+main { max-width: 1120px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+
+h1, h2, h3 { margin: 0; line-height: 1.15; font-family: var(--font-display); font-weight: 400; }
+/* Titres en Russo One : la typographie porte l'identité du site. */
+h1 { font-size: clamp(2rem, 5vw, 3.2rem); letter-spacing: 0.01em; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1rem; }
+p { margin: 0.5rem 0; }
+a { color: var(--link); transition: color var(--fast) var(--ease); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Panneau : formulaires de connexion, inscription, profil, import. */
+.card { padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.card h1 { font-size: 2rem; margin-bottom: 1rem; }
+/* En-tête de panneau : titre à gauche, action secondaire à droite. */
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.panel-head h1 { margin: 0; }
+.card form, label { display: grid; gap: 0.35rem; }
+label { margin: 0.9rem 0; font-weight: 550; }
+
+input, textarea {
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  font-weight: 400;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-small);
+  transition: border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+input:hover:not(:disabled), textarea:hover:not(:disabled) { border-color: var(--link); }
+input:focus, textarea:focus { border-color: var(--link); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+input:disabled, textarea:disabled { opacity: 0.55; }
+textarea { resize: vertical; }
+input[type='file'] { width: 100%; min-width: 0; padding: 0.4rem; }
+input[type='file']::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.45rem 0.8rem;
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface-alt);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+/* :not([class*='mat-']) : ne pas écraser les boutons internes d'Angular Material (Paginator, SnackBar). */
+button:not([class*='mat-']) {
+  padding: 0.6rem 1.1rem;
+  font: inherit;
+  font-weight: 650;
+  color: #ffffff;
+  background: var(--accent);
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  cursor: pointer;
+  /* Micro-interactions : seuls transform, filter et couleurs bougent (pas de recalcul de mise en page). */
+  transition: transform var(--fast) var(--ease), filter var(--fast) var(--ease), background-color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease);
+}
+button:not([class*='mat-']):hover:not(:disabled) { filter: brightness(1.12); box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent); }
+button:not([class*='mat-']):active:not(:disabled) { transform: scale(0.97); }
+button:not([class*='mat-']):disabled { opacity: 0.45; cursor: not-allowed; }
+/* Variante discrète pour les actions secondaires (Actualiser, Déconnexion, Supprimer). */
+button.ghost:not([class*='mat-']) { color: var(--fg); background: transparent; border-color: var(--input-border); }
+button.ghost:not([class*='mat-']):hover:not(:disabled) { filter: none; background: var(--surface-alt); box-shadow: none; }
+button:not([class*='mat-']):focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+audio { width: 100%; }
+.error { color: var(--error); }
+.success { color: var(--success); }
+.mat-mdc-paginator { background: transparent; }
+
+/*
+ * Changement de page en fondu (View Transitions, activées dans main.ts) : l'ancienne page
+ * s'efface pendant que la nouvelle monte légèrement. La barre du haut reste fixe.
+ */
+::view-transition-old(root) { animation: 120ms var(--ease) both page-out; }
+::view-transition-new(root) { animation: 250ms var(--ease) both page-in; }
+@keyframes page-out { to { opacity: 0; } }
+@keyframes page-in { from { opacity: 0; transform: translateY(8px); } }
+
+/* Squelette de chargement : la forme du contenu à venir, qui pulse en opacité. */
+.skeleton-list { display: grid; gap: 0.75rem; margin: 1rem 0; }
+.skeleton { display: block; height: 3.5rem; background: var(--surface-alt); border-radius: var(--radius-small); animation: pulse 1.4s ease-in-out infinite; }
+.skeleton:nth-child(2) { animation-delay: 0.15s; }
+.skeleton:nth-child(3) { animation-delay: 0.3s; }
+@keyframes pulse { 50% { opacity: 0.45; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/*
+ * Scène de concert (jeu et aperçus de la boutique) : dégradé vertical et deux projecteurs.
+ * Les couleurs viennent du fond de scène choisi dans la boutique ; sans choix, la scène néon.
+ */
+.stage-backdrop {
+  --stage: #2b1468;
+  --stage-deep: #140a33;
+  --spot-a: #ff3fb4;
+  --spot-b: #2ee6ff;
+  background:
+    radial-gradient(60% 45% at 15% 0%, color-mix(in srgb, var(--spot-a) 35%, transparent), transparent 70%),
+    radial-gradient(55% 45% at 85% 5%, color-mix(in srgb, var(--spot-b) 28%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--stage) 0%, var(--stage-deep) 75%);
+}
+
+/*
+ * Page « scène » (jeu, boutique) : sort du gabarit clair du site, occupe toute la largeur
+ * et redéfinit les jetons de couleur, donc reste sombre quel que soit le thème du système.
+ * À combiner avec .stage-backdrop pour le décor.
+ */
+.stage-page {
+  --neon: #b48cff;
+  --gold: #ffc93c;
+  --fg: #f5f2ff;
+  --muted: #b9add9;
+  --link: #d9c6ff;
+  --surface: rgb(20 10 51 / 0.78);
+  --surface-alt: #36207a;
+  --border: #4a2f99;
+  --input-border: #6a4fc0;
+  --accent: #8f5bff;
+  color-scheme: dark;
+  color: var(--fg);
+  /* Contexte d'empilement : un fond animé (z-index: -1) reste derrière le contenu, devant le dégradé. */
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100dvh - 4.5rem);
+  margin: -2rem calc(50% - 50vw) -3rem;
+  padding: 1.25rem max(1rem, calc(50vw - 560px)) 2rem;
+}

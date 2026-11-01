@@ -1,0 +1,31 @@
+:host { display: block; }
+.leaderboard { max-width: 760px; margin: 0 auto; }
+header p { color: var(--muted); }
+
+.filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.25rem 0; padding: 0; border: 0; }
+.filters legend { margin-bottom: 0.5rem; font-weight: 650; }
+.filters label { display: flex; align-items: center; gap: 0.4rem; margin: 0; padding: 0.45rem 0.9rem; border: 1px solid var(--input-border); border-radius: 999px; cursor: pointer; }
+.filters label:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.filters input { accent-color: var(--accent); }
+
+/* Une ligne par joueur : rang, nom, étoiles, records, total aligné à droite (chiffres tabulaires). */
+.ranking { display: grid; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.ranking li { display: grid; grid-template-columns: 2.5rem auto minmax(0, 1fr) auto auto 7rem; align-items: center; gap: 1rem; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.ranking li.empty { display: block; color: var(--muted); }
+.rank { font-size: 1.3rem; font-style: italic; font-weight: 900; font-family: var(--font-display); color: var(--muted); }
+.podium .rank { color: var(--brass); }
+.name { font-weight: 650; overflow-wrap: anywhere; }
+.name small { color: var(--muted); font-weight: 400; }
+.stars { color: var(--brass); font-variant-numeric: tabular-nums; }
+.played { color: var(--muted); font-size: 0.85rem; }
+.total { font-size: 1.15rem; text-align: right; font-variant-numeric: tabular-nums; }
+/* Le joueur connecté se repère d'un filet coloré, pas seulement par la couleur (mention « vous »). */
+.ranking li.me { border-left: 4px solid var(--accent); }
+
+@media (max-width: 640px) {
+  .ranking li { grid-template-columns: 2rem auto minmax(0, 1fr) auto; }
+  .stars, .played { display: none; }
+}
+
+.ranking li { transition: transform var(--fast) var(--ease), border-color var(--fast) var(--ease); }
+.ranking li:hover { transform: translateX(4px); border-color: var(--accent); }

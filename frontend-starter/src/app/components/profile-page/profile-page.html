@@ -1,0 +1,19 @@
+<section class="card">
+  <div class="panel-head">
+    <h1>Mon profil</h1>
+    <button type="button" class="ghost" (click)="load()" [disabled]="loading()">{{ loading() ? 'Chargement…' : 'Actualiser' }}</button>
+  </div>
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+  @if (auth.currentUser(); as user) {
+    <p>
+      <b>{{ user.name }}</b><br />{{ user.email }}<br />
+      Membre depuis le {{ user.createdAt | date: 'dd/MM/yyyy' }}
+    </p>
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <label>Nouveau nom<input formControlName="name" /></label>
+      <button type="submit" [disabled]="saving()">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
+    </form>
+  }
+</section>

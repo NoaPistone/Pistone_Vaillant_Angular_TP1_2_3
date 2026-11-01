@@ -1,0 +1,274 @@
+import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subscription } from 'rxjs';
+import { Track } from '../../shared/models/track.model';
+import { TrackService } from '../../shared/services/track.service';
+import { ScoreService } from '../../shared/services/score.service';
+import { ScoreRecord } from '../../shared/models/score.model';
+import { httpErrorMessage } from '../../shared/utils/http-error';
+import { TrackCardComponent, TrackChanges } from '../track-card/track-card';
+import { TrackUploadComponent } from '../track-upload/track-upload';
+
+/**
+ * Page « Backing tracks » : orchestre la bibliothèque paginée, la lecture et la suppression.
+ * Toutes les requêtes passent par TrackService ; ce composant ne manipule que des Signals.
+ */
+@Component({
+  imports: [MatPaginatorModule, TrackCardComponent, TrackUploadComponent],
+  templateUrl: './tracks-page.html',
+  styleUrl: './tracks-page.css',
+})
+export class TracksPageComponent implements OnDestroy {
+  private readonly service = inject(TrackService);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly scores = inject(ScoreService);
+  private listSubscription?: Subscription;
+
+  // État de la bibliothèque (pagination serveur).
+  readonly tracks = signal<Track[]>([]);
+  readonly page = signal(1);
+  readonly limit = signal(5);
+  readonly total = signal(0);
+  readonly pages = signal(1);
+  readonly loading = signal(false);
+  readonly error = signal('');
+
+  // État des actions sur une piste : l'id permet de n'animer que la card concernée.
+  readonly deletingId = signal<string | null>(null);
+  readonly loadingAudioId = signal<string | null>(null);
+  /** Piste dont le formulaire de modification est ouvert (une seule à la fois). */
+  readonly editingId = signal<string | null>(null);
+  readonly savingId = signal<string | null>(null);
+
+  /**
+   * Bandes du bandeau. La photo est lue dans `public/artistes/<slug>.png` si le fichier existe ;
+   * sinon le dégradé seul s'affiche (une image d'arrière-plan introuvable est ignorée par le navigateur).
+   * `background` (facultatif) impose la couleur de la bande au lieu de celle lue sur la photo.
+   */
+  readonly artists: { name: string; slug: string; color: string; background?: string }[] = [
+    { name: 'Jul', slug: 'jul', color: '#d9a99a' },
+    { name: 'Ninho', slug: 'ninho', color: '#e05a4f' },
+    { name: 'SDM', slug: 'sdm', color: '#f0b27a' },
+    { name: 'Gazo', slug: 'gazo', color: '#9bb7e8' },
+    { name: 'PLK', slug: 'plk', color: '#d6332b', background: '#2a98c4' },
+    { name: 'Ziak', slug: 'ziak', color: '#e8935a' },
+  ];
+
+  /** Couleur du fond de chaque photo, lue au chargement : la bande se fond avec la photo. */
+  readonly photoColors = signal<Partial<Record<string, { background: string; label: string }>>>({});
+
+  /** Records du joueur ; on garde, par morceau, le meilleur toutes difficultés confondues. */
+  private readonly records = signal<ScoreRecord[]>([]);
+  readonly bestByTrack = computed(() => {
+    const best: Partial<Record<string, ScoreRecord>> = {};
+    for (const record of this.records()) {
+      if ((best[record.trackId]?.score ?? -1) < record.score) best[record.trackId] = record;
+    }
+    return best;
+  });
+
+  // Lecteur audio.
+  readonly currentTrack = signal<Track | null>(null);
+  readonly audioUrl = signal('');
+  readonly audioError = signal('');
+
+  constructor() {
+    this.load();
+    // Information secondaire : en cas d'échec, les cartes s'affichent simplement sans record.
+    this.scores.mine().subscribe({ next: (records) => this.records.set(records), error: () => undefined });
+    for (const artist of this.artists) this.readPhotoColor(artist.slug);
+  }
+
+  /**
+   * Moyenne des pixels du tiers central de la ligne du haut (le fond, au-dessus de la tête).
+   * Seul le centre est utilisé : c'est la partie visible dans la bande, et les bords sont souvent
+   * assombris (vignettage).
+   * Photo absente : `onload` n'est jamais appelé et la couleur par défaut reste en place.
+   */
+  private readPhotoColor(slug: string): void {
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = 1;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.drawImage(image, 0, 0); // ne garde que la première ligne de pixels
+      const from = Math.floor(canvas.width / 3);
+      const pixels = ctx.getImageData(from, 0, Math.max(1, from), 1).data;
+      const rgb = [0, 0, 0];
+      for (let i = 0; i < pixels.length; i += 4) for (let c = 0; c < 3; c++) rgb[c] += pixels[i + c];
+      const [r, g, b] = rgb.map((sum) => Math.round(sum / (pixels.length / 4)));
+      // Luminance perçue : nom foncé sur fond clair, clair sur fond foncé.
+      const label = 0.299 * r + 0.587 * g + 0.114 * b > 140 ? '#1b1f2a' : '#f4f6f8';
+      this.photoColors.update((colors) => ({ ...colors, [slug]: { background: `rgb(${r} ${g} ${b})`, label } }));
+    };
+    image.src = `artistes/${slug}.png`;
+  }
+
+  /**
+   * Charge la page courante depuis le serveur.
+   * Si une requête précédente est encore en cours (clics rapides sur « Suivant »),
+   * elle est annulée : seule la dernière page demandée est affichée.
+   */
+  load(): void {
+    this.listSubscription?.unsubscribe();
+    this.error.set('');
+    this.loading.set(true);
+    this.listSubscription = this.service.list(this.page(), this.limit()).subscribe({
+      next: (response) => {
+        // Page devenue vide (dernière piste supprimée, ici ou dans un autre onglet) :
+        // on revient à la dernière page existante au lieu d'afficher « Aucune piste ».
+        if (response.items.length === 0 && response.total > 0 && this.page() > response.pages) {
+          this.go(response.pages);
+          return;
+        }
+        this.tracks.set(response.items);
+        this.total.set(response.total);
+        this.pages.set(response.pages);
+        this.loading.set(false);
+      },
+      error: (error: unknown) => {
+        this.loading.set(false);
+        this.error.set(httpErrorMessage(error, 'Bibliothèque impossible à charger'));
+      },
+    });
+  }
+
+  go(page: number): void {
+    this.page.set(page);
+    this.load();
+  }
+
+  /** Événement du Paginator Material : `pageIndex` commence à 0, l'API à 1. */
+  onPage(event: PageEvent): void {
+    this.limit.set(event.pageSize);
+    this.go(event.pageIndex + 1);
+  }
+
+  /** Après un upload réussi, la nouvelle piste (la plus récente) est en page 1. */
+  onUploaded(): void {
+    this.go(1);
+  }
+
+  play(track: Track): void {
+    if (this.loadingAudioId()) return;
+    this.audioError.set('');
+    this.loadingAudioId.set(track.id);
+    this.service.audio(track.id).subscribe({
+      next: (blob) => {
+        this.loadingAudioId.set(null);
+        // L'ancienne ObjectURL est libérée avant d'en créer une nouvelle.
+        this.releaseAudio();
+        this.audioUrl.set(URL.createObjectURL(blob));
+        this.currentTrack.set(track);
+      },
+      error: (error: unknown) => {
+        this.loadingAudioId.set(null);
+        // Avec responseType 'blob', le corps d'erreur est aussi un Blob : on s'appuie sur le statut.
+        this.audioError.set(
+          error instanceof HttpErrorResponse && error.status === 404
+            ? 'Piste introuvable : elle a peut-être été supprimée.'
+            : httpErrorMessage(error, 'Lecture audio impossible'),
+        );
+      },
+    });
+  }
+
+  /** Erreur du lecteur <audio> lui-même (fichier corrompu, codec non supporté…). */
+  onAudioError(): void {
+    this.audioError.set('Le navigateur ne peut pas lire ce fichier (format non supporté ou fichier corrompu).');
+  }
+
+  remove(track: Track): void {
+    if (this.deletingId()) return;
+    if (!window.confirm(`Supprimer « ${track.title} » ? Cette action est définitive.`)) return;
+
+    this.deletingId.set(track.id);
+    this.service.remove(track.id).subscribe({
+      next: () => {
+        this.deletingId.set(null);
+        this.editingId.set(null); // la suppression se lance depuis le formulaire de modification
+        if (this.currentTrack()?.id === track.id) this.stopPlayer();
+        this.notify(`Piste « ${track.title} » supprimée.`);
+        this.load();
+      },
+      error: (error: unknown) => {
+        this.deletingId.set(null);
+        const status = error instanceof HttpErrorResponse ? error.status : 0;
+        // 401 : l'intercepteur a déjà déconnecté l'utilisateur et redirigé vers /login.
+        if (status === 401) return;
+        this.notify(
+          status === 404
+            ? 'Cette piste n’existe plus ou ne vous appartient pas. La liste a été actualisée.'
+            : httpErrorMessage(error, 'Suppression impossible'),
+        );
+        // L'affichage n'est plus fiable : on resynchronise avec le serveur.
+        this.load();
+      },
+    });
+  }
+
+  edit(track: Track): void {
+    if (!this.savingId()) this.editingId.set(track.id);
+  }
+
+  cancelEdit(): void {
+    if (!this.savingId()) this.editingId.set(null);
+  }
+
+  /**
+   * Enregistre titre et description. En cas de succès, la piste renvoyée par le serveur
+   * remplace l'ancienne dans la liste (pas besoin de recharger toute la page) ; le lecteur
+   * et la card en lecture affichent aussitôt le nouveau titre.
+   * En cas d'erreur, le formulaire reste ouvert avec la saisie de l'utilisateur.
+   */
+  save({ track, changes }: { track: Track; changes: TrackChanges }): void {
+    if (this.savingId()) return;
+    this.savingId.set(track.id);
+    this.service.update(track.id, changes).subscribe({
+      next: (updated) => {
+        this.savingId.set(null);
+        this.editingId.set(null);
+        this.tracks.update((tracks) => tracks.map((t) => (t.id === updated.id ? updated : t)));
+        if (this.currentTrack()?.id === updated.id) this.currentTrack.set(updated);
+        this.notify(`Piste « ${updated.title} » modifiée.`);
+      },
+      error: (error: unknown) => {
+        this.savingId.set(null);
+        const status = error instanceof HttpErrorResponse ? error.status : 0;
+        if (status === 401) return; // déjà géré par l'intercepteur
+        if (status === 404) {
+          this.editingId.set(null);
+          this.notify('Cette piste n’existe plus ou ne vous appartient pas. La liste a été actualisée.');
+          this.load();
+          return;
+        }
+        this.notify(httpErrorMessage(error, 'Modification impossible'));
+      },
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.listSubscription?.unsubscribe();
+    this.releaseAudio();
+  }
+
+  private notify(message: string): void {
+    this.snackBar.open(message, 'Fermer', { duration: 5000 });
+  }
+
+  private stopPlayer(): void {
+    this.releaseAudio();
+    this.audioUrl.set('');
+    this.currentTrack.set(null);
+  }
+
+  /** Une ObjectURL garde le Blob en mémoire tant qu'elle n'est pas révoquée. */
+  private releaseAudio(): void {
+    const url = this.audioUrl();
+    if (url) URL.revokeObjectURL(url);
+  }
+}
