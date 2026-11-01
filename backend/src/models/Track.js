@@ -14,8 +14,6 @@ const schema = new mongoose.Schema(
       index: true,
     },
     title: { type: String, required: true, trim: true, maxlength: 120 },
-    // Texte libre ajouté après l'import (notes de travail, tonalité, tempo…).
-    description: { type: String, trim: true, maxlength: 500, default: "" },
     originalName: { type: String, required: true },
     storedName: { type: String, required: true, select: false },
     mimeType: { type: String, required: true },
@@ -37,7 +35,6 @@ schema.methods.toPublic = function () {
     id: this.id,
     ownerId: String(this.ownerId),
     title: this.title,
-    description: this.description,
     originalName: this.originalName,
     mimeType: this.mimeType,
     size: this.size,

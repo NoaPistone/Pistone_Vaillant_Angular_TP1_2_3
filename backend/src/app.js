@@ -407,53 +407,6 @@ export function createApp() {
     }
   });
 
-  /**
-   * Modifie le titre et/ou la description d'une piste après son import.
-   * Seuls ces deux champs sont recopiés depuis le corps : un client ne peut pas
-   * changer ownerId, storedName ou size en les glissant dans la requête.
-   * Les types sont vérifiés AVANT la base ; les longueurs maximales sont
-   * contrôlées par les validateurs Mongoose (runValidators) et donnent un 400.
-   */
-  app.patch("/api/tracks/:id", auth, async (req, res, next) => {
-    try {
-      const { title, description } = req.body ?? {};
-      const changes = {};
-      if (title !== undefined) {
-        if (typeof title !== "string" || !title.trim()) {
-          return res.status(400).json({ message: "Titre invalide" });
-        }
-        changes.title = title;
-      }
-      if (description !== undefined) {
-        if (typeof description !== "string") {
-          return res.status(400).json({ message: "Description invalide" });
-        }
-        changes.description = description;
-      }
-      if (Object.keys(changes).length === 0) {
-        return res.status(400).json({ message: "Aucune modification fournie" });
-      }
-
-      // Le filtre ownerId garantit qu'on ne modifie que ses propres pistes (sinon 404).
-      const track = await Track.findOneAndUpdate(
-        { _id: req.params.id, ownerId: req.auth.sub },
-        { $set: changes },
-        { new: true, runValidators: true },
-      );
-
-      if (!track) {
-        console.warn(`[tracks] Modification impossible : ${req.params.id}`);
-        return res.status(404).json({ message: "Piste inconnue" });
-      }
-
-      console.log(`[tracks] Piste modifiée : ${track.id}`);
-      res.json(track.toPublic());
-    } catch (error) {
-      console.error("[tracks] Erreur de modification", error);
-      next(error);
-    }
-  });
-
   /** Supprime la métadonnée et le fichier physique correspondant. */
   app.delete("/api/tracks/:id", auth, async (req, res, next) => {
     try {
