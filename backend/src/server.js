@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import { createApp } from "./app.js";
 import { User } from "./models/User.js";
-import { Score } from "./models/Score.js";
 
 // Le port et l'URI viennent de l'environnement du backend, jamais d'Angular.
 const port = process.env.PORT || 3000;
@@ -46,21 +45,6 @@ try {
   }
 } catch (error) {
   console.error("[startup] Impossible de préparer le compte de démonstration", error);
-  throw error;
-}
-
-try {
-  // Migration des records d'avant les instruments : ils comptaient pour la partition « lead ».
-  // syncIndexes() remplace ensuite l'ancien index unique (sans instrument) par le nouveau.
-  const { modifiedCount } = await Score.updateMany({ instrument: { $exists: false } }, { $set: { instrument: "lead" } });
-  if (modifiedCount) console.log(`[startup] ${modifiedCount} record(s) rattaché(s) à l'instrument lead`);
-  await Score.syncIndexes();
-  // Comptes d'avant les amis : la validation leur attribue un identifiant #xxxx.
-  const untagged = await User.find({ tag: { $exists: false } });
-  for (const user of untagged) await user.save({ validateModifiedOnly: true });
-  if (untagged.length) console.log(`[startup] ${untagged.length} identifiant(s) d'ami attribué(s)`);
-} catch (error) {
-  console.error("[startup] Impossible de mettre à jour les index des scores", error);
   throw error;
 }
 
