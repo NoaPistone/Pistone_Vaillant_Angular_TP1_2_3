@@ -46,13 +46,8 @@
               [loadingAudio]="loadingAudioId() === track.id"
               [deleting]="deletingId() === track.id"
               [disabled]="deletingId() !== null"
-              [editing]="editingId() === track.id"
-              [saving]="savingId() === track.id"
               (play)="play($event)"
               (remove)="remove($event)"
-              (edit)="edit($event)"
-              (cancelEdit)="cancelEdit()"
-              (save)="save($event)"
             />
           </li>
         } @empty {

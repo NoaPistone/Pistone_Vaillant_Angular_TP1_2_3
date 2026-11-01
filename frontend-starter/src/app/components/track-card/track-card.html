@@ -1,70 +1,36 @@
-<article class="track" [class.current]="current()" [class.editing]="editing()" [attr.aria-busy]="deleting() || loadingAudio() || saving()">
-  @if (editing()) {
-    <form class="edit" [formGroup]="form" (ngSubmit)="submit()" [attr.aria-label]="'Modifier ' + track().title">
-      <!-- Un fieldset désactivé désactive d'un coup tous ses champs et boutons pendant l'envoi. -->
-      <fieldset [disabled]="saving()">
-        <label>Titre
-          <input formControlName="title" maxlength="120" autocomplete="off" />
-          @if (form.controls.title.touched && form.controls.title.invalid) {
-            <small class="error">Le titre est obligatoire.</small>
-          }
-        </label>
-        <label>Description
-          <textarea formControlName="description" rows="3" maxlength="500" placeholder="Tonalité, tempo, passage à travailler…"></textarea>
-        </label>
-        <div class="edit-actions">
-          <button type="submit">{{ saving() ? 'Enregistrement…' : 'Enregistrer' }}</button>
-          <button type="button" class="ghost" (click)="cancelEdit.emit()">Annuler</button>
-          <!-- Action rare et destructrice : rangée dans le formulaire plutôt que sur chaque carte. -->
-          <button
-            type="button"
-            class="ghost remove"
-            (click)="remove.emit(track())"
-            [disabled]="deleting()"
-            [attr.aria-label]="'Supprimer ' + track().title"
-          >
-            {{ deleting() ? 'Suppression…' : 'Supprimer' }}
-          </button>
-        </div>
-      </fieldset>
-    </form>
-  } @else {
+<article class="track" [class.current]="current()" [attr.aria-busy]="deleting() || loadingAudio()">
+  <button
+    type="button"
+    class="play"
+    (click)="play.emit(track())"
+    [disabled]="busy()"
+    [attr.aria-label]="'Lire ' + track().title"
+  >
+    {{ loadingAudio() ? '…' : '▶' }}
+  </button>
+
+  <div class="identity">
+    <h3>{{ track().title }}</h3>
+    @if (current()) {
+      <p class="playing">En lecture</p>
+    }
+  </div>
+
+  <dl class="meta">
+    <div><dt>Format</dt><dd>{{ format() }}</dd></div>
+    <div><dt>Taille</dt><dd>{{ track().size | fileSize }}</dd></div>
+    <div><dt>Ajoutée le</dt><dd><time [attr.datetime]="track().createdAt">{{ track().createdAt | date: 'dd/MM/yyyy' }}</time></dd></div>
+  </dl>
+
+  <div class="secondary">
     <button
       type="button"
-      class="play"
-      (click)="play.emit(track())"
+      class="ghost remove"
+      (click)="remove.emit(track())"
       [disabled]="busy()"
-      [attr.aria-label]="'Lire ' + track().title"
+      [attr.aria-label]="'Supprimer ' + track().title"
     >
-      {{ loadingAudio() ? '…' : '▶' }}
+      {{ deleting() ? 'Suppression…' : 'Supprimer' }}
     </button>
-
-    <div class="identity">
-      <h3>{{ track().title }}</h3>
-      @if (track().description) {
-        <p class="description">{{ track().description }}</p>
-      }
-      @if (current()) {
-        <p class="playing">En lecture</p>
-      }
-    </div>
-
-    <dl class="meta">
-      <div><dt>Format</dt><dd>{{ format() }}</dd></div>
-      <div><dt>Taille</dt><dd>{{ track().size | fileSize }}</dd></div>
-      <div><dt>Ajoutée le</dt><dd><time [attr.datetime]="track().createdAt">{{ track().createdAt | date: 'dd/MM/yyyy' }}</time></dd></div>
-    </dl>
-
-    <div class="secondary">
-      <button
-        type="button"
-        class="ghost"
-        (click)="startEdit()"
-        [disabled]="busy()"
-        [attr.aria-label]="'Modifier ' + track().title"
-      >
-        Modifier
-      </button>
-    </div>
-  }
+  </div>
 </article>

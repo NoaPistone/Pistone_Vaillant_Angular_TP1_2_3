@@ -45,11 +45,6 @@ export class TrackService {
     });
   }
 
-  /** Modifie le titre et/ou la description. Le backend renvoie la piste à jour (`200`), `400` ou `404`. */
-  update(id: string, changes: Pick<Track, 'title' | 'description'>) {
-    return this.http.patch<Track>(`/api/tracks/${id}`, changes);
-  }
-
   /** Supprime une piste. Le backend vérifie le JWT et le propriétaire (`204` ou `404`). */
   remove(id: string) {
     return this.http.delete<void>(`/api/tracks/${id}`);

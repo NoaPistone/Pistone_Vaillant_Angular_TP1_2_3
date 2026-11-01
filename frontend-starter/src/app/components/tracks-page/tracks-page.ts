@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { Track } from '../../shared/models/track.model';
 import { TrackService } from '../../shared/services/track.service';
 import { httpErrorMessage } from '../../shared/utils/http-error';
-import { TrackCardComponent, TrackChanges } from '../track-card/track-card';
+import { TrackCardComponent } from '../track-card/track-card';
 import { TrackUploadComponent } from '../track-upload/track-upload';
 
 /**
@@ -35,9 +35,6 @@ export class TracksPageComponent implements OnDestroy {
   // État des actions sur une piste : l'id permet de n'animer que la card concernée.
   readonly deletingId = signal<string | null>(null);
   readonly loadingAudioId = signal<string | null>(null);
-  /** Piste dont le formulaire de modification est ouvert (une seule à la fois). */
-  readonly editingId = signal<string | null>(null);
-  readonly savingId = signal<string | null>(null);
 
   // Lecteur audio.
   readonly currentTrack = signal<Track | null>(null);
@@ -130,7 +127,6 @@ export class TracksPageComponent implements OnDestroy {
     this.service.remove(track.id).subscribe({
       next: () => {
         this.deletingId.set(null);
-        this.editingId.set(null); // la suppression se lance depuis le formulaire de modification
         if (this.currentTrack()?.id === track.id) this.stopPlayer();
         this.notify(`Piste « ${track.title} » supprimée.`);
         this.load();
@@ -147,46 +143,6 @@ export class TracksPageComponent implements OnDestroy {
         );
         // L'affichage n'est plus fiable : on resynchronise avec le serveur.
         this.load();
-      },
-    });
-  }
-
-  edit(track: Track): void {
-    if (!this.savingId()) this.editingId.set(track.id);
-  }
-
-  cancelEdit(): void {
-    if (!this.savingId()) this.editingId.set(null);
-  }
-
-  /**
-   * Enregistre titre et description. En cas de succès, la piste renvoyée par le serveur
-   * remplace l'ancienne dans la liste (pas besoin de recharger toute la page) ; le lecteur
-   * et la card en lecture affichent aussitôt le nouveau titre.
-   * En cas d'erreur, le formulaire reste ouvert avec la saisie de l'utilisateur.
-   */
-  save({ track, changes }: { track: Track; changes: TrackChanges }): void {
-    if (this.savingId()) return;
-    this.savingId.set(track.id);
-    this.service.update(track.id, changes).subscribe({
-      next: (updated) => {
-        this.savingId.set(null);
-        this.editingId.set(null);
-        this.tracks.update((tracks) => tracks.map((t) => (t.id === updated.id ? updated : t)));
-        if (this.currentTrack()?.id === updated.id) this.currentTrack.set(updated);
-        this.notify(`Piste « ${updated.title} » modifiée.`);
-      },
-      error: (error: unknown) => {
-        this.savingId.set(null);
-        const status = error instanceof HttpErrorResponse ? error.status : 0;
-        if (status === 401) return; // déjà géré par l'intercepteur
-        if (status === 404) {
-          this.editingId.set(null);
-          this.notify('Cette piste n’existe plus ou ne vous appartient pas. La liste a été actualisée.');
-          this.load();
-          return;
-        }
-        this.notify(httpErrorMessage(error, 'Modification impossible'));
       },
     });
   }

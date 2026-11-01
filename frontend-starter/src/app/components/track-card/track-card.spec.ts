@@ -1,12 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
 import { TrackCardComponent } from './track-card';
 import { Track } from '../../shared/models/track.model';
 
 const track: Track = {
   id: 'track-1',
   title: 'Blues en La',
-  description: 'Shuffle lent',
   originalName: 'blues.mp3',
   mimeType: 'audio/mpeg',
   size: 3 * 1024 * 1024,
@@ -20,7 +18,7 @@ describe('TrackCardComponent', () => {
     host().querySelector(`button[aria-label="${label} ${track.title}"]`) as HTMLButtonElement;
 
   beforeEach(async () => {
-    TestBed.configureTestingModule({ imports: [TrackCardComponent], providers: [provideRouter([])] });
+    TestBed.configureTestingModule({ imports: [TrackCardComponent] });
     fixture = TestBed.createComponent(TrackCardComponent);
     fixture.componentRef.setInput('track', track);
     await fixture.whenStable();
@@ -34,90 +32,25 @@ describe('TrackCardComponent', () => {
     expect(content).toContain('3.0 Mo');
   });
 
-  it('émet play avec la piste', () => {
+  it('émet play et remove avec la piste', () => {
     const play = vi.fn();
+    const remove = vi.fn();
     fixture.componentInstance.play.subscribe(play);
+    fixture.componentInstance.remove.subscribe(remove);
 
     button('Lire').click();
-
-    expect(play).toHaveBeenCalledWith(track);
-  });
-
-  it('range « Supprimer » dans le formulaire de modification', async () => {
-    const remove = vi.fn();
-    fixture.componentInstance.remove.subscribe(remove);
-    expect(button('Supprimer')).toBeNull(); // pas sur la carte
-
-    fixture.componentRef.setInput('editing', true);
-    await fixture.whenStable();
     button('Supprimer').click();
 
+    expect(play).toHaveBeenCalledWith(track);
     expect(remove).toHaveBeenCalledWith(track);
   });
 
   it('désactive les actions pendant la suppression', async () => {
     fixture.componentRef.setInput('deleting', true);
     await fixture.whenStable();
-    expect(button('Lire').disabled).toBe(true);
-    expect(button('Modifier').disabled).toBe(true);
 
-    fixture.componentRef.setInput('editing', true);
-    await fixture.whenStable();
+    expect(button('Lire').disabled).toBe(true);
     expect(button('Supprimer').disabled).toBe(true);
     expect(button('Supprimer').textContent).toContain('Suppression…');
-  });
-
-  describe('modification', () => {
-    const field = (name: string) => host().querySelector(`[formControlName="${name}"]`) as HTMLInputElement;
-
-    it('affiche la description et demande l’ouverture du formulaire pré-rempli', async () => {
-      const edit = vi.fn();
-      fixture.componentInstance.edit.subscribe(edit);
-      expect(host().textContent).toContain('Shuffle lent');
-
-      button('Modifier').click();
-      fixture.componentRef.setInput('editing', true);
-      await fixture.whenStable();
-
-      expect(edit).toHaveBeenCalledWith(track);
-      expect(field('title').value).toBe('Blues en La');
-      expect(field('description').value).toBe('Shuffle lent');
-    });
-
-    it('émet save avec les valeurs nettoyées', async () => {
-      const save = vi.fn();
-      fixture.componentInstance.save.subscribe(save);
-      fixture.componentInstance.startEdit();
-      fixture.componentRef.setInput('editing', true);
-      await fixture.whenStable();
-
-      fixture.componentInstance.form.setValue({ title: '  Blues lent ', description: ' 80 bpm ' });
-      (host().querySelector('button[type="submit"]') as HTMLButtonElement).click();
-
-      expect(save).toHaveBeenCalledWith({ track, changes: { title: 'Blues lent', description: '80 bpm' } });
-    });
-
-    it('refuse un titre vide sans rien émettre', async () => {
-      const save = vi.fn();
-      fixture.componentInstance.save.subscribe(save);
-      fixture.componentRef.setInput('editing', true);
-      await fixture.whenStable();
-
-      fixture.componentInstance.form.setValue({ title: '   ', description: '' });
-      (host().querySelector('button[type="submit"]') as HTMLButtonElement).click();
-      await fixture.whenStable();
-
-      expect(save).not.toHaveBeenCalled();
-      expect(host().textContent).toContain('Le titre est obligatoire.');
-    });
-
-    it('désactive le formulaire pendant l’enregistrement', async () => {
-      fixture.componentRef.setInput('editing', true);
-      fixture.componentRef.setInput('saving', true);
-      await fixture.whenStable();
-
-      expect((host().querySelector('fieldset') as HTMLFieldSetElement).disabled).toBe(true);
-      expect(host().textContent).toContain('Enregistrement…');
-    });
   });
 });

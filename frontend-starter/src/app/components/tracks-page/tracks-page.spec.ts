@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideRouter } from '@angular/router';
-import { Observable, of, Subject, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { TracksPageComponent } from './tracks-page';
 import { TrackService } from '../../shared/services/track.service';
 import { Page } from '../../shared/models/page.model';
@@ -34,7 +34,6 @@ describe('TracksPageComponent', () => {
     upload: ReturnType<typeof vi.fn>;
     audio: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
-    update: ReturnType<typeof vi.fn>;
   };
   let snackBar: { open: ReturnType<typeof vi.fn> };
   const text = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -59,7 +58,6 @@ describe('TracksPageComponent', () => {
       upload: vi.fn(),
       audio: vi.fn(),
       remove: vi.fn(() => of(undefined)),
-      update: vi.fn(),
     };
     snackBar = { open: vi.fn() };
   });
@@ -112,11 +110,9 @@ describe('TracksPageComponent', () => {
     it('appelle DELETE après confirmation, notifie et recharge la liste', () => {
       vi.spyOn(window, 'confirm').mockReturnValue(true);
       service.list.mockClear();
-      component.edit(makeTrack('a')); // « Supprimer » est dans le formulaire de modification
 
       component.remove(makeTrack('a'));
 
-      expect(component.editingId()).toBeNull(); // le formulaire se ferme avec la carte supprimée
       expect(service.remove).toHaveBeenCalledWith('a');
       expect(snackBar.open).toHaveBeenCalledWith('Piste « Piste a » supprimée.', 'Fermer', expect.anything());
       expect(service.list).toHaveBeenCalledTimes(1);
@@ -208,53 +204,6 @@ describe('TracksPageComponent', () => {
       component.play(makeTrack('a'));
 
       expect(component.audioError()).toContain('introuvable');
-    });
-  });
-
-  describe('modification d’une piste', () => {
-    beforeEach(create);
-    const changes = { title: 'Blues lent', description: 'Shuffle, 80 bpm' };
-
-    it('remplace la piste modifiée dans la liste, ferme le formulaire et notifie', async () => {
-      const updated = { ...makeTrack('a'), ...changes };
-      service.update.mockReturnValue(of(updated));
-      component.edit(makeTrack('a'));
-
-      component.save({ track: makeTrack('a'), changes });
-      await fixture.whenStable();
-
-      expect(service.update).toHaveBeenCalledWith('a', changes);
-      expect(component.editingId()).toBeNull();
-      expect(component.tracks()[0]).toEqual(updated);
-      expect(text()).toContain('Shuffle, 80 bpm');
-      expect(service.list).toHaveBeenCalledTimes(1); // pas de rechargement complet
-      expect(snackBar.open).toHaveBeenCalledWith('Piste « Blues lent » modifiée.', 'Fermer', { duration: 5000 });
-    });
-
-    it('garde le formulaire ouvert et bloque la double soumission pendant l’envoi', () => {
-      const pending = new Subject<Track>();
-      service.update.mockReturnValue(pending);
-      component.edit(makeTrack('a'));
-
-      component.save({ track: makeTrack('a'), changes });
-      component.save({ track: makeTrack('a'), changes });
-
-      expect(service.update).toHaveBeenCalledTimes(1);
-      expect(component.savingId()).toBe('a');
-      expect(component.editingId()).toBe('a');
-    });
-
-    it('garde la saisie et affiche le message serveur en cas de 400', () => {
-      service.update.mockReturnValue(
-        throwError(() => new HttpErrorResponse({ status: 400, error: { message: 'Titre invalide' } })),
-      );
-      component.edit(makeTrack('a'));
-
-      component.save({ track: makeTrack('a'), changes });
-
-      expect(component.editingId()).toBe('a');
-      expect(component.savingId()).toBeNull();
-      expect(snackBar.open).toHaveBeenCalledWith('Titre invalide', 'Fermer', { duration: 5000 });
     });
   });
 });

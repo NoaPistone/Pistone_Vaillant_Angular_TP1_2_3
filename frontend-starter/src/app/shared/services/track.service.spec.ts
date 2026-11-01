@@ -99,17 +99,4 @@ describe('TrackService', () => {
     request.flush(null, { status: 204, statusText: 'No Content' });
     expect(completed).toBe(true);
   });
-
-  it('modifie titre et description avec PATCH /api/tracks/:id', () => {
-    const changes = { title: 'Blues lent', description: 'Shuffle en La, 80 bpm' };
-    let received: Track | undefined;
-    service.update('track-1', changes).subscribe((response) => (received = response));
-
-    const request = http.expectOne('/api/tracks/track-1');
-    expect(request.request.method).toBe('PATCH');
-    expect(request.request.body).toEqual(changes);
-    const updated = { id: 'track-1', ...changes } as Track;
-    request.flush(updated);
-    expect(received).toEqual(updated);
-  });
 });
