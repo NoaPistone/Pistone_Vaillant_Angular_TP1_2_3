@@ -9,8 +9,6 @@ nav a:hover { color: var(--fg); background: var(--surface-alt); }
 /* La page courante est soulignée d'un trait plutôt que colorée : l'information ne repose pas que sur la couleur. */
 nav a.active { color: var(--fg); box-shadow: inset 0 -2px 0 var(--accent); border-radius: 0; }
 nav button { margin-left: 0.5rem; }
-/* Avatar et solde : un raccourci vers la boutique. */
-nav a.me { display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; color: var(--fg); font-weight: 700; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 640px) {
   .topbar { flex-wrap: wrap; }

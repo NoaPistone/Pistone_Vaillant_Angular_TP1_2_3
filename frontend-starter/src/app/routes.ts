@@ -11,10 +11,5 @@ export const routes: Routes = [
   { path: 'register', component: RegisterPageComponent },
   { path: 'profile', component: ProfilePageComponent, canActivate: [authGuard] },
   { path: 'tracks', component: TracksPageComponent, canActivate: [authGuard] },
-  {
-    path: 'shop',
-    loadComponent: () => import('./components/shop-page/shop-page').then((m) => m.ShopPageComponent),
-    canActivate: [authGuard],
-  },
   { path: '**', redirectTo: 'tracks' },
 ];
