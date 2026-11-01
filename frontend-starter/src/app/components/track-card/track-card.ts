@@ -1,7 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { Track } from '../../shared/models/track.model';
 import { ScoreRecord } from '../../shared/models/score.model';
 import { FileSizePipe } from '../../shared/pipes/file-size.pipe';
@@ -19,7 +18,7 @@ export type TrackChanges = Pick<Track, 'title' | 'description'>;
  */
 @Component({
   selector: 'app-track-card',
-  imports: [DatePipe, DecimalPipe, FileSizePipe, RouterLink, ReactiveFormsModule],
+  imports: [DatePipe, DecimalPipe, FileSizePipe, ReactiveFormsModule],
   templateUrl: './track-card.html',
   styleUrl: './track-card.css',
 })

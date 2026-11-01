@@ -34,13 +34,6 @@ describe('TrackCardComponent', () => {
     expect(content).toContain('3.0 Mo');
   });
 
-  it('propose un lien Jouer vers la page de jeu de la piste', () => {
-    const link = host().querySelector('a.game-link') as HTMLAnchorElement;
-
-    expect(link.getAttribute('href')).toBe('/game/track-1');
-    expect(link.getAttribute('aria-label')).toBe('Jouer à Blues en La');
-  });
-
   it('émet play avec la piste', () => {
     const play = vi.fn();
     fixture.componentInstance.play.subscribe(play);

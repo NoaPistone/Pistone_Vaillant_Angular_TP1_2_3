@@ -14,10 +14,6 @@ h3 { overflow-wrap: anywhere; }
 dt { color: var(--muted); font-size: 0.75rem; }
 dd { margin: 0; font-variant-numeric: tabular-nums; }
 
-/* Lien stylé en bouton : c'est une navigation vers le jeu, pas une action. */
-.game-link { padding: 0.55rem 1rem; color: var(--bg); font-weight: 650; text-decoration: none; background: var(--brass); border-radius: var(--radius-small); }
-.game-link:hover { filter: brightness(1.1); }
-
 .secondary { display: flex; gap: 0.25rem; }
 button.remove:not([class*='mat-']) { color: var(--error); border-color: transparent; }
 
@@ -32,7 +28,7 @@ button.remove:not([class*='mat-']) { color: var(--error); border-color: transpar
 @media (max-width: 640px) {
   .track { grid-template-columns: auto minmax(0, 1fr); padding-left: 0.5rem; }
   .meta { grid-column: 2; }
-  .game-link, .secondary { grid-column: 2; justify-self: start; }
+  .secondary { grid-column: 2; justify-self: start; }
 }
 
 /* Record : étoiles gagnées en laiton, les autres en filigrane. */

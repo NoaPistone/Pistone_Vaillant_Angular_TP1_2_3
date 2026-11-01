@@ -65,8 +65,6 @@
     <div><dt>Ajoutée le</dt><dd><time [attr.datetime]="track().createdAt">{{ track().createdAt | date: 'dd/MM/yyyy' }}</time></dd></div>
     </dl>
 
-    <a class="game-link" [routerLink]="['/game', track().id]" [state]="{ title: track().title }" [attr.aria-label]="'Jouer à ' + track().title">Jouer</a>
-
     <div class="secondary">
       <button
         type="button"

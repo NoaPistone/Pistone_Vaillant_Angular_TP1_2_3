@@ -11,12 +11,6 @@ export const routes: Routes = [
   { path: 'register', component: RegisterPageComponent },
   { path: 'profile', component: ProfilePageComponent, canActivate: [authGuard] },
   { path: 'tracks', component: TracksPageComponent, canActivate: [authGuard] },
-  // Chargé à la demande : le code du jeu n'est téléchargé qu'au premier clic sur « Jouer ».
-  {
-    path: 'game/:id',
-    loadComponent: () => import('./components/game-page/game-page').then((m) => m.GamePageComponent),
-    canActivate: [authGuard],
-  },
   {
     path: 'leaderboard',
     loadComponent: () => import('./components/leaderboard-page/leaderboard-page').then((m) => m.LeaderboardPageComponent),
