@@ -16,15 +16,5 @@ export const routes: Routes = [
     loadComponent: () => import('./components/shop-page/shop-page').then((m) => m.ShopPageComponent),
     canActivate: [authGuard],
   },
-  {
-    path: 'groups',
-    loadComponent: () => import('./components/groups-page/groups-page').then((m) => m.GroupsPageComponent),
-    canActivate: [authGuard],
-  },
-  {
-    path: 'groups/:id/live',
-    loadComponent: () => import('./components/live-page/live-page').then((m) => m.LivePageComponent),
-    canActivate: [authGuard],
-  },
   { path: '**', redirectTo: 'tracks' },
 ];
