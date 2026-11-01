@@ -1,8 +1,5 @@
 # Fichiers système macOS
 .DS_Store
 
-# Connecteur Blender (configuration locale de Claude Code)
+# Configuration MCP locale de Claude Code
 .mcp.json
-
-# Scène Blender de la page Accueil (fichier lourd, hors dépôt)
-blender/

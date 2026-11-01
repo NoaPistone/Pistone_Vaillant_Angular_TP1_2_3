@@ -1,7 +1,6 @@
 :root {
   /*
-   * Thème néon sombre (palette « gaming » recommandée par UI UX Pro Max) : violet néon,
-   * accent rose pour les actions fortes. Les composants n'utilisent que ces variables.
+   * Thème néon sombre : violet néon, accent rose pour les actions fortes. Les composants n'utilisent que ces variables.
    */
   --fg: #e2e8f0;
   --bg: #0f0f23;
