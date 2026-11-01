@@ -107,6 +107,18 @@ Les prompts sont reformulés à partir de nos demandes. Les chemins de fichiers 
   - pourquoi la validation frontend ne suffit pas : l'API peut être appelée sans Angular ;
   - la différence entre un Blob complet, le buffering du navigateur et le streaming du serveur (`sendFile`).
 
+### Choix de `Blob` et `ObjectURL`
+
+La route `GET /api/tracks/:id/audio` exige un JWT. Seul `HttpClient` passe par `authInterceptor`, qui ajoute l'en-tête `Authorization`. Le fichier est donc demandé par `TrackService.audio()` avec `responseType: 'blob'`. `URL.createObjectURL(blob)` transforme ensuite ces octets en une URL locale (`blob:...`) que le lecteur `<audio>` sait lire, sans nouvelle requête réseau.
+
+### Réponses aux questions mémoire, buffering et streaming
+
+1. **Le backend charge-t-il le fichier entier en mémoire ?** Non. `res.sendFile()` (`backend/src/app.js`) lit le fichier sur le disque et l'envoie morceau par morceau. La mémoire du serveur reste faible, même pour un fichier de 25 Mo.
+2. **Quand le composant reçoit-il le fichier ?** Seulement à la fin du téléchargement. Avec `responseType: 'blob'`, l'Observable n'émet qu'une valeur, le fichier complet. C'est alors que `play()` crée l'ObjectURL. Sur une connexion lente, la lecture démarre donc avec un délai.
+3. **Avec 100 morceaux, les 100 fichiers sont-ils en mémoire dès l'affichage ?** Non. `TrackService.list()` ne récupère que le JSON des métadonnées (titre, format, taille, date), et seulement pour la page affichée (5 pistes par défaut). L'audio n'est téléchargé que dans `play()`, au clic sur ▶. `releaseAudio()` révoque l'ObjectURL précédente : un seul fichier reste en mémoire à la fois.
+4. **Différence avec 100 éléments `<audio src="/api/tracks/:id/audio">` ?** Le navigateur gérerait lui-même le téléchargement. Il pourrait lancer jusqu'à 100 requêtes à l'affichage, selon l'attribut `preload`. Il lirait aussi en flux : la lecture commence avant la fin du téléchargement grâce au buffering et aux requêtes `Range`. Mais ces requêtes ne passent pas par Angular : sans JWT, le backend répondrait `401` à chacune.
+5. **Pourquoi révoquer l'ObjectURL ?** Tant qu'elle existe, le navigateur garde le Blob en mémoire, même si plus rien ne l'utilise. `releaseAudio()` la révoque à chaque changement de piste, et `ngOnDestroy()` révoque la dernière quand on quitte la page.
+
 ---
 
 # TP3 - Fiabilisation et enrichissement
