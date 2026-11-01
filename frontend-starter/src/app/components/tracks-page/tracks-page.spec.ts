@@ -5,8 +5,6 @@ import { provideRouter } from '@angular/router';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { TracksPageComponent } from './tracks-page';
 import { TrackService } from '../../shared/services/track.service';
-import { ScoreService } from '../../shared/services/score.service';
-import { ScoreRecord } from '../../shared/models/score.model';
 import { Page } from '../../shared/models/page.model';
 import { Track } from '../../shared/models/track.model';
 
@@ -39,7 +37,6 @@ describe('TracksPageComponent', () => {
     update: ReturnType<typeof vi.fn>;
   };
   let snackBar: { open: ReturnType<typeof vi.fn> };
-  let scores: { mine: ReturnType<typeof vi.fn> };
   const text = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
 
   async function create(): Promise<void> {
@@ -48,7 +45,6 @@ describe('TracksPageComponent', () => {
       providers: [
         { provide: TrackService, useValue: service },
         { provide: MatSnackBar, useValue: snackBar },
-        { provide: ScoreService, useValue: scores },
         provideRouter([]),
       ],
     });
@@ -66,7 +62,6 @@ describe('TracksPageComponent', () => {
       update: vi.fn(),
     };
     snackBar = { open: vi.fn() };
-    scores = { mine: vi.fn(() => of([])) };
   });
 
   afterEach(() => vi.restoreAllMocks());
@@ -260,29 +255,6 @@ describe('TracksPageComponent', () => {
       expect(component.editingId()).toBe('a');
       expect(component.savingId()).toBeNull();
       expect(snackBar.open).toHaveBeenCalledWith('Titre invalide', 'Fermer', { duration: 5000 });
-    });
-  });
-
-  describe('records', () => {
-    const record = (trackId: string, difficulty: ScoreRecord['difficulty'], score: number, stars: number): ScoreRecord => ({
-      id: `${trackId}-${difficulty}`, trackId, difficulty, instrument: 'lead', score, stars, accuracy: 90, maxCombo: 10, updatedAt: '2026-10-08',
-    });
-
-    it('garde le meilleur record par morceau, toutes difficultés confondues, et l’affiche sur la carte', async () => {
-      scores.mine.mockReturnValue(of([record('a', 'easy', 900, 2), record('a', 'expert', 4200, 4), record('b', 'hard', 300, 1)]));
-      await create();
-
-      expect(component.bestByTrack()['a']?.score).toBe(4200);
-      expect(component.bestByTrack()['b']?.score).toBe(300);
-      expect(text()).toContain('4,200');
-    });
-
-    it('affiche la bibliothèque même si les records ne se chargent pas', async () => {
-      scores.mine.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-      await create();
-
-      expect(fixture.nativeElement.querySelectorAll('app-track-card').length).toBe(2);
-      expect(component.error()).toBe('');
     });
   });
 });

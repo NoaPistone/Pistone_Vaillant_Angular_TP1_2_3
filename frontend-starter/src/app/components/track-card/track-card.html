@@ -52,17 +52,7 @@
     <dl class="meta">
       <div><dt>Format</dt><dd>{{ format() }}</dd></div>
       <div><dt>Taille</dt><dd>{{ track().size | fileSize }}</dd></div>
-      @if (best(); as record) {
-      <div class="best">
-        <dt>Record</dt>
-        <dd>
-          <span class="stars" aria-hidden="true">@for (won of bestStars(); track $index) {<span [class.won]="won">★</span>}</span>
-          {{ record.score | number }}
-          <span class="visually-hidden">points, {{ record.stars }} étoile(s) sur 5</span>
-        </dd>
-      </div>
-    }
-    <div><dt>Ajoutée le</dt><dd><time [attr.datetime]="track().createdAt">{{ track().createdAt | date: 'dd/MM/yyyy' }}</time></dd></div>
+      <div><dt>Ajoutée le</dt><dd><time [attr.datetime]="track().createdAt">{{ track().createdAt | date: 'dd/MM/yyyy' }}</time></dd></div>
     </dl>
 
     <div class="secondary">

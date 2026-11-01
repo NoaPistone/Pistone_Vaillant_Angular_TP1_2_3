@@ -48,7 +48,6 @@
               [disabled]="deletingId() !== null"
               [editing]="editingId() === track.id"
               [saving]="savingId() === track.id"
-              [best]="bestByTrack()[track.id] ?? null"
               (play)="play($event)"
               (remove)="remove($event)"
               (edit)="edit($event)"

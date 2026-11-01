@@ -120,16 +120,4 @@ describe('TrackCardComponent', () => {
       expect(host().textContent).toContain('Enregistrement…');
     });
   });
-
-  it('affiche le record et ses étoiles quand le joueur a déjà joué', async () => {
-    expect(host().querySelector('.best')).toBeNull();
-    fixture.componentRef.setInput('best', {
-      id: 's1', trackId: 'track-1', difficulty: 'expert', instrument: 'lead', score: 4200, stars: 3, accuracy: 90, maxCombo: 50, updatedAt: '',
-    });
-    await fixture.whenStable();
-
-    expect(host().querySelector('.best')?.textContent).toContain('4,200');
-    expect(host().querySelectorAll('.best .won').length).toBe(3);
-    expect(host().textContent).toContain('3 étoile(s) sur 5');
-  });
 });

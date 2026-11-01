@@ -1,12 +1,10 @@
-import { Component, computed, inject, OnDestroy, signal } from '@angular/core';
+import { Component, inject, OnDestroy, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subscription } from 'rxjs';
 import { Track } from '../../shared/models/track.model';
 import { TrackService } from '../../shared/services/track.service';
-import { ScoreService } from '../../shared/services/score.service';
-import { ScoreRecord } from '../../shared/models/score.model';
 import { httpErrorMessage } from '../../shared/utils/http-error';
 import { TrackCardComponent, TrackChanges } from '../track-card/track-card';
 import { TrackUploadComponent } from '../track-upload/track-upload';
@@ -23,7 +21,6 @@ import { TrackUploadComponent } from '../track-upload/track-upload';
 export class TracksPageComponent implements OnDestroy {
   private readonly service = inject(TrackService);
   private readonly snackBar = inject(MatSnackBar);
-  private readonly scores = inject(ScoreService);
   private listSubscription?: Subscription;
 
   // État de la bibliothèque (pagination serveur).
@@ -42,16 +39,6 @@ export class TracksPageComponent implements OnDestroy {
   readonly editingId = signal<string | null>(null);
   readonly savingId = signal<string | null>(null);
 
-  /** Records du joueur ; on garde, par morceau, le meilleur toutes difficultés confondues. */
-  private readonly records = signal<ScoreRecord[]>([]);
-  readonly bestByTrack = computed(() => {
-    const best: Partial<Record<string, ScoreRecord>> = {};
-    for (const record of this.records()) {
-      if ((best[record.trackId]?.score ?? -1) < record.score) best[record.trackId] = record;
-    }
-    return best;
-  });
-
   // Lecteur audio.
   readonly currentTrack = signal<Track | null>(null);
   readonly audioUrl = signal('');
@@ -59,8 +46,6 @@ export class TracksPageComponent implements OnDestroy {
 
   constructor() {
     this.load();
-    // Information secondaire : en cas d'échec, les cartes s'affichent simplement sans record.
-    this.scores.mine().subscribe({ next: (records) => this.records.set(records), error: () => undefined });
   }
 
   /**

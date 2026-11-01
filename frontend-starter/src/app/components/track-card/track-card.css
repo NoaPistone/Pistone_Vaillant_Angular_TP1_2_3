@@ -31,10 +31,6 @@ button.remove:not([class*='mat-']) { color: var(--error); border-color: transpar
   .secondary { grid-column: 2; justify-self: start; }
 }
 
-/* Record : étoiles gagnées en laiton, les autres en filigrane. */
-.best .stars span { color: var(--border); }
-.best .stars span.won { color: var(--brass); }
-
 /* Survol d'une piste : fond et filet violets, sans déplacer la liste. */
 .track { transition: background-color var(--fast) var(--ease), border-color var(--fast) var(--ease); }
 .track:hover:not(.editing, .current) { background: color-mix(in srgb, var(--surface-alt) 60%, transparent); border-left-color: var(--accent); }

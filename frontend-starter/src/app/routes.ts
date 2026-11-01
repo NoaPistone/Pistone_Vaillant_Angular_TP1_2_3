@@ -12,11 +12,6 @@ export const routes: Routes = [
   { path: 'profile', component: ProfilePageComponent, canActivate: [authGuard] },
   { path: 'tracks', component: TracksPageComponent, canActivate: [authGuard] },
   {
-    path: 'leaderboard',
-    loadComponent: () => import('./components/leaderboard-page/leaderboard-page').then((m) => m.LeaderboardPageComponent),
-    canActivate: [authGuard],
-  },
-  {
     path: 'shop',
     loadComponent: () => import('./components/shop-page/shop-page').then((m) => m.ShopPageComponent),
     canActivate: [authGuard],
